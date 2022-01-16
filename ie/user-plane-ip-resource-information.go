@@ -7,6 +7,8 @@ package ie
 import (
 	"io"
 	"net"
+
+	"github.com/wmnsk/go-pfcp/internal/utils"
 )
 
 // NewUserPlaneIPResourceInformation creates a new UserPlaneIPResourceInformation IE.
@@ -73,7 +75,7 @@ type UserPlaneIPResourceInformationFields struct {
 	TEIDRange       uint8
 	IPv4Address     net.IP
 	IPv6Address     net.IP
-	NetworkInstance string
+	NetworkInstance []uint8
 	SourceInterface uint8
 }
 
@@ -94,7 +96,7 @@ func NewUserPlaneIPResourceInformationFields(flags uint8, tRange uint8, v4, v6, 
 	}
 
 	if has6thBit(flags) {
-		f.NetworkInstance = ni
+		f.NetworkInstance = utils.EncodeFQDN(ni)
 	}
 
 	if has7thBit(flags) {
@@ -154,10 +156,11 @@ func (f *UserPlaneIPResourceInformationFields) UnmarshalBinary(b []byte) error {
 			n--
 		}
 
-		if l < offset+n {
+		if l < offset {
 			return io.ErrUnexpectedEOF
 		}
-		f.NetworkInstance = string(b[offset:n])
+
+		copy(f.NetworkInstance, b[offset:n])
 		return nil
 	}
 
